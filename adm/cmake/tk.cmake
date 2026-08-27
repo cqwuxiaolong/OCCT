@@ -18,6 +18,12 @@ if (NOT DEFINED 3RDPARTY_TK_INCLUDE_DIR)
   set (3RDPARTY_TK_INCLUDE_DIR "" CACHE FILEPATH "The directory containing headers of tk")
 endif()
 
+if (BUILD_USE_VCPKG)
+  set (3RDPARTY_TK_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" CACHE PATH "The directory containing tk" FORCE)
+  set (3RDPARTY_TCLTK_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" CACHE PATH "The directory containing tcltk" FORCE)
+  set (3RDPARTY_TK_INCLUDE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" CACHE FILEPATH "The directory containing headers of tk" FORCE)
+endif()
+
 if (BUILD_SHARED_LIBS)
   # tk library file (with absolute path)
   if (NOT DEFINED 3RDPARTY_TK_LIBRARY OR NOT 3RDPARTY_TK_LIBRARY_DIR)
@@ -190,7 +196,8 @@ if (BUILD_SHARED_LIBS)
   if (3RDPARTY_TK_LIBRARY AND EXISTS "${3RDPARTY_TK_LIBRARY}")
     list (APPEND 3RDPARTY_LIBRARY_DIRS "${3RDPARTY_TK_LIBRARY_DIR}")
   else()
-    list (APPEND 3RDPARTY_NO_LIBS 3RDPARTY_TK_LIBRARY_DIR)
+    set (USE_TK OFF)
+    message(STATUS "Warning: TK library is not found. TK will be disabled.")
   endif()
 
   if (WIN32)
@@ -267,15 +274,15 @@ if (BUILD_SHARED_LIBS)
   mark_as_advanced (3RDPARTY_TK_LIBRARY 3RDPARTY_TK_DLL)
 endif()
 
-# unset all redundant variables
-#TCL
-OCCT_CHECK_AND_UNSET (TCL_LIBRARY)
-OCCT_CHECK_AND_UNSET (TCL_INCLUDE_PATH)
-OCCT_CHECK_AND_UNSET (TCL_TCLSH)
+# hide all redundant variables
+
+mark_as_advanced (TCL_LIBRARY)
+mark_as_advanced (TCL_INCLUDE_PATH)
+mark_as_advanced (TCL_TCLSH)
 #TK
-OCCT_CHECK_AND_UNSET (TK_LIBRARY)
-OCCT_CHECK_AND_UNSET (TK_INCLUDE_PATH)
-OCCT_CHECK_AND_UNSET (TK_WISH)
+mark_as_advanced (TK_LIBRARY)
+mark_as_advanced (TK_INCLUDE_PATH)
+mark_as_advanced (TK_WISH)
 
 if (NOT BUILD_SHARED_LIBS)
   OCCT_CHECK_AND_UNSET (3RDPARTY_TK_LIBRARY)

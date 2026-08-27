@@ -57,9 +57,9 @@ proc checkarray {name array expected} {
   }
 }
 
-pload TOPTEST
+pload TOPTEST VISUALIZATION
 
-catch {Close D}
+Close D -silent
 
 # Normal test execution
 if !$Create_Doc {

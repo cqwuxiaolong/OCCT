@@ -7,8 +7,8 @@ puts ""
 #######################################################################
 
 set BugNumber OCC22962
-set check_value 96
-pload DCAF
+set check_value 97
+pload OCAF
 
 ReadStep D1 [locate_data_file OCC22962-dm1-oc-214.stp]
 set dump_info [ XDumpDF D1 ]

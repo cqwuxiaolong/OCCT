@@ -19,7 +19,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_CSF_NAME LIBRARY_NAME
   # include occt macros. compiler_bitness, os_wiht_bit, compiler
   OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_macros")
 
-  # specify product folder in connectin with 3RDPARTY_DIR
+  # specify product folder in connection with 3RDPARTY_DIR
   if (3RDPARTY_DIR AND EXISTS "${3RDPARTY_DIR}")
     #CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_DIR 3RDPARTY_${PRODUCT_NAME}_DIR PATH "The directory containing ${PRODUCT_NAME}")
 
@@ -101,8 +101,9 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_CSF_NAME LIBRARY_NAME
                                                       CMAKE_FIND_ROOT_PATH_BOTH
                                                       NO_DEFAULT_PATH)
     else()
+      string(TOLOWER ${PRODUCT_NAME} LOW_CASE_PRODUCT_NAME)
       find_path (3RDPARTY_${PRODUCT_NAME}_INCLUDE_DIR NAMES ${HEADER_NAME}
-                                                      PATH_SUFFIXES include inc headers
+                                                      PATH_SUFFIXES include inc headers ${LOW_CASE_PRODUCT_NAME}
                                                       CMAKE_FIND_ROOT_PATH_BOTH)
     endif()
   endif()
@@ -120,7 +121,7 @@ macro (THIRDPARTY_PRODUCT PRODUCT_NAME HEADER_NAME LIBRARY_CSF_NAME LIBRARY_NAME
 #    if (BUILD_SHARED_LIBS)
       # library
       if (NOT 3RDPARTY_${PRODUCT_NAME}_LIBRARY_${LIBRARY_NAME_SUFFIX} OR NOT EXISTS "${3RDPARTY_${PRODUCT_NAME}_LIBRARY_${LIBRARY_NAME_SUFFIX}}")
-        set (CMAKE_FIND_LIBRARY_SUFFIXES .lib .so .dylib .a)
+        set (CMAKE_FIND_LIBRARY_SUFFIXES .dll.a .lib .so .dylib .a)
 
         set (${PRODUCT_NAME}_PATH_SUFFIXES lib)
         if (WIN32)

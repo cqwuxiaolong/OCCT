@@ -7,24 +7,10 @@
 
 introduction/introduction.md
 
-samples/samples.md
-../samples/mfc/standard/ReadMe.md
-../samples/CSharp/ReadMe.md
-../samples/CSharp/ReadMe_D3D.md
-../samples/qt/AndroidQt/ReadMe.md
-../samples/qt/OCCTOverview/ReadMe.md
-../samples/java/jniviewer/ReadMe.md
-../samples/ios/UIKitSample/ReadMe.md
-../samples/webgl/ReadMe.md
-samples/ocaf.md
-samples/ocaf_func.md
-samples/draw_scripts.md
-
 tutorial/tutorial.md
 
 build/build_upgrade.md
 build/build_occt/building_occt.md
-build/build_3rdparty/building_3rdparty.md
 build/build_documentation/building_documentation.md
 
 debug/debug.md
@@ -40,9 +26,9 @@ user_guides/visualization/visualization.md
 user_guides/iges/iges.md
 user_guides/step/step.md
 user_guides/xde/xde.md
+user_guides/de_wrapper/de_wrapper.md
 user_guides/ocaf/ocaf.md
 user_guides/draw_test_harness/draw_test_harness.md
-user_guides/inspector/inspector.md
 user_guides/vis/vis.md
 
 specification/specification.md
@@ -56,5 +42,7 @@ contribution/coding_rules.md
 contribution/contribution_workflow/contribution_workflow.md
 contribution/git_guide/git_guide.md
 contribution/tests/tests.md
+
+samples/samples.md
 
 license.md

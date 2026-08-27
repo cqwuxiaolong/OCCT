@@ -1,5 +1,31 @@
 # vtk
 
+# vcpkg processing
+if (BUILD_USE_VCPKG)
+  find_package(VTK REQUIRED
+    COMPONENTS
+      CommonCore
+      RenderingUI
+      RenderingOpenGL2
+    OPTIONAL_COMPONENTS
+      mpi
+      utf8
+      eigen
+      doubleconversion
+      lz4
+      lzma
+      expat
+  )
+  set(IS_VTK_9XX 1)
+  if (WIN32)
+    set (USED_3RDPARTY_VTK_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
+  else()
+    set (USED_3RDPARTY_VTK_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+  endif()
+  list (APPEND 3RDPARTY_INCLUDE_DIRS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+  return()
+endif()
+
 if (NOT DEFINED INSTALL_VTK)
   set (INSTALL_VTK OFF CACHE BOOL "${INSTALL_VTK_DESCR}")
 endif()
@@ -12,7 +38,7 @@ endif()
 # include occt macros. compiler_bitness, os_wiht_bit, compiler
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_macros")
 
-# specify VTK folder in connectin with 3RDPARTY_DIR
+# specify VTK folder in connection with 3RDPARTY_DIR
 if (3RDPARTY_DIR AND EXISTS "${3RDPARTY_DIR}")
   #CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_DIR 3RDPARTY_VTK_DIR PATH "The directory containing VTK")
 
@@ -60,7 +86,20 @@ if (3RDPARTY_VTK_DIR AND EXISTS "${3RDPARTY_VTK_DIR}")
   set (ENV{VTK_DIR} "${3RDPARTY_VTK_DIR}")
 endif()
 
-find_package(VTK QUIET)
+find_package(VTK QUIET
+  COMPONENTS
+    CommonCore
+    RenderingUI
+    RenderingOpenGL2
+  OPTIONAL_COMPONENTS
+    mpi
+    utf8
+    eigen
+    doubleconversion
+    lz4
+    lzma
+    expat
+)
 
 if (3RDPARTY_VTK_DIR AND EXISTS "${3RDPARTY_VTK_DIR}")
   set (ENV{VTK_DIR} ${CACHED_VTK_DIR})
@@ -200,7 +239,7 @@ endif()
 
 if (3RDPARTY_VTK_INCLUDE_DIR AND EXISTS "${3RDPARTY_VTK_INCLUDE_DIR}")
   list (APPEND 3RDPARTY_INCLUDE_DIRS ${3RDPARTY_VTK_INCLUDE_DIR})
-else()
+elseif (NOT VTK_FOUND)
   list (APPEND 3RDPARTY_NOT_INCLUDED 3RDPARTY_VTK_INCLUDE_DIR)
 endif()
 
@@ -302,6 +341,7 @@ if (NOT INSTALL_VTK)
   endif()
 endif()
 
-OCCT_CHECK_AND_UNSET (VTK_INCLUDE_DIRS)
-OCCT_CHECK_AND_UNSET (VTK_LIBRARY_DIRS)
-OCCT_CHECK_AND_UNSET (VTK_DIR)
+# hide some variables
+mark_as_advanced (VTK_INCLUDE_DIRS)
+mark_as_advanced (VTK_LIBRARY_DIRS)
+mark_as_advanced (VTK_DIR)

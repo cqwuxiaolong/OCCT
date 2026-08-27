@@ -3,7 +3,7 @@ puts " 0031685: Data Exchange, STEPCAFControl_Reader - NULL dereference on trans
 puts "==================================================="
 puts ""
 
-pload DCAF
+pload OCAF
 
 # Read file
 ReadStep D [locate_data_file bug31685_1.stp]
@@ -14,12 +14,12 @@ checkshape res f
 set dump [XDumpNbDGTs D f]
 set info "
 
- NbOfDimensions          : 14
+ NbOfDimensions          : 15
   NbOfDimensionalSize    : 7
   NbOfDimensionalLocation: 0
   NbOfAngular            : 0
   NbOfWithPath           : 0
-  NbOfCommonLabels       : 0
+  NbOfCommonLabels       : 1
  NbOfTolerances          : 22
   NbOfGTWithModifiers    : 4
   NbOfGTWithMaxTolerance : 0

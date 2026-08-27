@@ -1,12 +1,8 @@
 # variable description
 
-# 
-set (BUILD_PATCH_DESCR 
-"Points to the directory recognized as a 'patch' for OCCT. If specified,
-the files from this directory take precedence over the corresponding native
-OCCT sources. This way you are able to introduce patches to Open CASCADE
-Technology not affecting the original source distribution")
-
+set (OCCT_PROJECT_NAME_DESCR
+"Project name used in install directory paths for Unix and vcpkg layouts.
+Allows customization of directory structure for different package names.")
 
 set (BUILD_LIBRARY_TYPE_DESCR 
 "Specifies the type of library to be created. 'Shared' libraries
@@ -28,6 +24,9 @@ Applies only for Debug configuration.")
 set (BUILD_SHARED_LIBRARY_NAME_POSTFIX_DESCR
 "Append the postfix to names of output libraries")
 
+set (BUILD_SOVERSION_NUMBERS_DESCR
+"Version numbers to put into SONAME: 0 - for empty, 1 - for major, 2 - for major.minor, 3 - for major.minor.maintenance")
+
 set (BUILD_RELEASE_DISABLE_EXCEPTIONS_DESCR
 "Disables exceptions like Standard_OutOfRange in Release builds.
 Defines No_Exception macros for Release builds when enabled (default).
@@ -38,22 +37,30 @@ set (BUILD_ENABLE_FPE_SIGNAL_HANDLER_DESCR
 Corresponding environment variable (CSF_FPE) can be changed manually
 in custom.bat/sh scripts without regeneration by CMake.")
 
+set (BUILD_FORCE_RelWithDebInfo_DESCR
+"Generate PDB files within normal Release build.")
+
 set (BUILD_USE_PCH_DESCR
 "Use precompiled headers to accelerate the build.
 Precompiled headers are generated automatically by Cotire tool.")
 
+set (BUILD_INCLUDE_SYMLINK_DESCR
+"Include symbolic links to the source files in the build directory.
+OFF - using a reference file with direct include to the origin,
+ON - symbolic link to the origin file are created")
+
 # install variables
-set (INSTALL_DIR_DESCR 
+set (INSTALL_DIR_DESCR
 "The place where built OCCT libraries, headers, test cases (INSTALL_TEST_CASES variable),
-samples (INSTALL_SAMPLES_DESCR variable) and certain 3rdparties (INSTALL_TBB and
-other similar variables) will be placed during the installation process (building INSTALL project)")
+and certain 3rdparties (INSTALL_TBB and other similar variables) will be placed
+during the installation process (building INSTALL project)")
 
 set (INSTALL_DIR_WITH_VERSION_DESCR
 "Use OCCT version number as suffix for names of directories")
 
 set (INSTALL_DIR_LAYOUT_DESCR
 "Defines structure of OCCT files (binaries, resources, headers etc.) for the install directory.
-Two variants are predefined: for Windows (standard OCCT layout) and for Unix operating systems (standard Linux layout).
+Three variants are predefined: for Windows (standard OCCT layout), for Unix operating systems (standard Linux layout), and for vcpkg (standard vcpkg layout without 'd' and 'i' suffixes).
 If needed, layout can be customized with INSTALL_DIR_* variables.")
 
 set (INSTALL_DIR_BIN_DESCR 
@@ -66,10 +73,8 @@ set (INSTALL_DIR_DOC_DESCR
 "Subdirectory of INSTALL_DIR where documentation will be installed")
 set (INSTALL_DIR_LIB_DESCR 
 "Subdirectory of INSTALL_DIR where libraries (.so on Linux, .lib on Windows) will be installed")
-set (INSTALL_DIR_RESOURCE_DESCR 
+set (INSTALL_DIR_RESOURCE_DESCR
 "Subdirectory of INSTALL_DIR where OCCT resource files will be installed")
-set (INSTALL_DIR_SAMPLES_DESCR 
-"Subdirectory of INSTALL_DIR where samples will be installed")
 set (INSTALL_DIR_TESTS_DESCR 
 "Subdirectory of INSTALL_DIR where test scripts will be installed")
 set (INSTALL_DIR_SCRIPT_DESCR 
@@ -84,7 +89,6 @@ set (${INSTALL_TARGET_VARIABLE}_DESCR
 project) into the installation directory (INSTALL_DIR variable)")
 endmacro()
 
-INSTALL_MESSAGE (INSTALL_SAMPLES          "OCCT samples")
 INSTALL_MESSAGE (INSTALL_TEST_CASES       "non-regression OCCT test scripts")
 INSTALL_MESSAGE (INSTALL_DOC_Overview     "OCCT overview documentation (HTML format)")
 INSTALL_MESSAGE (INSTALL_FFMPEG           "FFmpeg binaries")
@@ -123,26 +127,6 @@ want to build some particular libraries (toolkits) only, then you may uncheck
 all modules in the corresponding BUILD_MODUE_* options and provide the list of
 necessary libraries here. Of course, all dependencies will be resolved automatically")
 
-set (BUILD_SAMPLES_MFC_DESCR
-"Indicates whether OCCT MFC samples should be built together with OCCT.
-These samples show some possibilities of using OCCT and they can be executed
-with script samples.bat from the installation directory (INSTALL_DIR)")
-
-set (BUILD_SAMPLES_QT_DESCR
-"Indicates whether OCCT Qt samples should be built together with OCCT.
-These samples show some possibilities of using OCCT and they can be executed
-with script samples.bat from the installation directory (INSTALL_DIR)")
-
-set (BUILD_Inspector_DESCR
-"Indicates whether OCCT inspector should be built together with OCCT.
-This inspector provides functionality to interactively inspect low-level content
-of the OCAF data model, OCCT viewer, etc. have been introduced in OCCT.
-It can be executed with script inspector.bat from the installation directory (INSTALL_DIR) or
-using 'tinspector' command in DRAW interpretator")
-
-set (BUILD_MODULE_UwpSample_DESCR
-"Indicates whether OCCT UWP sample should be built together with OCCT.")
-
 set (BUILD_DOC_Overview_DESCR
 "Indicates whether OCCT overview documentation project (Markdown format) should be
 created together with OCCT. It is not built together with OCCT. Checking this options
@@ -155,12 +139,18 @@ set (3RDPARTY_DIR_DESCR
 third-party product have been found - corresponding CMake variables will be specified
 (VTK: 3RDPARTY_VTK_DIR, 3RDPARTY_VTK_INCLUDE_DIR, 3RDPARTY_VTK_LIBRARY_DIR)")
 
+set (USE_TK_DESCR
+"Indicates whether Tk product should be used by Draw Harness for user interface")
+
+set (USE_FREETYPE_DESCR
+"Indicates whether FreeType product should be used in OCCT for text rendering using external font files")
+
 set (USE_FFMPEG_DESCR
 "Indicates whether FFmpeg framework is used or not. FFmpeg stands for
 multimedia data handling, open-source software libraries used for video encoding and decoding.")
 
 set (USE_FREEIMAGE_DESCR
-"Indicates whether Freeimage product should be used in OCCT visualization
+"Indicates whether FreeImage product should be used in OCCT visualization
 module for support of popular graphics image formats (PNG, BMP etc)")
 
 set (USE_OPENVR_DESCR
@@ -170,13 +160,17 @@ set (USE_RAPIDJSON_DESCR
 "Indicates whether RapidJSON product should be used in OCCT DataExchange
 module for support of JSON-based formats like glTF")
 
+set (USE_DRACO_DESCR
+"Indicates whether Draco mesh decoding library should be used by glTF reader")
+
 set (USE_EGL_DESCR
 "Indicates whether EGL should be used in OCCT visualization
 module instead of conventional OpenGL context creation APIs")
 
+set (USE_OPENGL_DESCR
+"Indicates whether OpenGL desktop should be used in OCCT visualization module")
 set (USE_GLES2_DESCR
-"Indicates whether OpenGL ES 2.0 should be used in OCCT visualization
-module instead of desktop OpenGL")
+"Indicates whether OpenGL ES 2.0 should be used in OCCT visualization module")
 
 set (USE_TBB_DESCR
 "Indicates whether TBB is used or not. TBB stands for Threading Building Blocks,
@@ -189,11 +183,43 @@ ToolKit, the technology of Kitware Inc intended for general-purpose scientific
 visualization. OCCT comes with a bridge between CAD data representation and
 VTK by means of its dedicated VIS component (VTK Integration Services).")
 
-set (USE_GLX_DESCR "Indicates whether X11 OpenGl on OSX is used or not")
+set (USE_XLIB_DESCR "Indicates whether X11 is used or not")
 
 set (USE_D3D_DESCR "Indicates whether optional Direct3D wrapper in OCCT visualization module should be build or not")
+
+# Documentation variables
+set (BUILD_DOC_Overview_DESCR 
+     "Build OCCT overview documentation using Doxygen")
+     
+set (BUILD_DOC_RefMan_DESCR 
+     "Build OCCT reference manual documentation using Doxygen")
+
+set (BUILD_DOC_DotNumThreads_DESCR
+     "Number of Graphviz dot processes Doxygen may run in parallel (empty for default)")
+
+set (BUILD_DOC_DotBatchSize_DESCR
+     "Number of graphs per Graphviz dot process (empty for default)")
+
+set (BUILD_DOC_Search_DESCR
+     "Enable client-side search in generated Doxygen documentation")
+     
+set (INSTALL_DOC_Overview_DESCR 
+     "Install OCCT overview documentation")
+     
+set (INSTALL_DOC_RefMan_DESCR 
+     "Install OCCT reference manual documentation")
 
 macro (BUILD_MODULE MODULE_NAME)
   set (ENABLE_MODULE TRUE)
   set (BUILD_MODULE_${MODULE_NAME} ${ENABLE_MODULE} CACHE BOOL "${BUILD_MODULE_${MODULE_NAME}_DESCR}")
+  OCCT_INCLUDE_CMAKE_FILE (src/${MODULE_NAME}/TOOLKITS)
+  set (${MODULE_NAME}_TOOLKITS ${OCCT_${MODULE_NAME}_LIST_OF_TOOLKITS})
+  foreach (TOOLKIT ${OCCT_${MODULE_NAME}_LIST_OF_TOOLKITS})
+    OCCT_INCLUDE_CMAKE_FILE (src/${MODULE_NAME}/${TOOLKIT}/PACKAGES)
+    OCCT_INCLUDE_CMAKE_FILE (src/${MODULE_NAME}/${TOOLKIT}/EXTERNLIB)
+    OCCT_INCLUDE_CMAKE_FILE (src/${MODULE_NAME}/${TOOLKIT}/FILES)
+    foreach (PACKAGE ${OCCT_${TOOLKIT}_LIST_OF_PACKAGES})
+      OCCT_INCLUDE_CMAKE_FILE (src/${MODULE_NAME}/${TOOLKIT}/${PACKAGE}/FILES)
+    endforeach()
+  endforeach()
 endmacro()

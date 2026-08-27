@@ -2,6 +2,8 @@ puts "========"
 puts "Point cloud object from triangulated sphere"
 puts "========"
 
+pload MODELING VISUALIZATION
+
 # create sphere
 sphere ss 10
 mkface s ss
@@ -19,7 +21,7 @@ vrotate 0.2 0.0 0.0
 vdump $::imagedir/${::casename}_green.png
 
 # random colors mode
-vpointcloud p s -randcolors
+vpointcloud p s -randcolors -nonormals
 vdump $::imagedir/${::casename}_rand.png
 
 # texture mapping
@@ -38,3 +40,4 @@ vsetmaterial p COPPER
 vdump $::imagedir/${::casename}_copper.png
 
 vmoveto 200 200
+vdump $imagedir/${casename}.png

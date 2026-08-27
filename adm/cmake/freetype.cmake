@@ -1,5 +1,18 @@
 # freetype
 
+# vcpkg processing
+if (BUILD_USE_VCPKG)
+  find_package (Freetype MODULE REQUIRED)
+  set (CSF_FREETYPE Freetype::Freetype)
+  if (WIN32)
+    set (USED_3RDPARTY_FREETYPE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
+  else()
+    set (USED_3RDPARTY_FREETYPE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+  endif()
+  list (APPEND 3RDPARTY_INCLUDE_DIRS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+  return()
+endif()
+
 if (NOT DEFINED INSTALL_FREETYPE AND BUILD_SHARED_LIBS)
   set (INSTALL_FREETYPE OFF CACHE BOOL "${INSTALL_FREETYPE_DESCR}")
 endif()
@@ -14,7 +27,7 @@ OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_macros")
 OCCT_MAKE_COMPILER_SHORT_NAME()
 OCCT_MAKE_COMPILER_BITNESS()
 
-# specify freetype folder in connectin with 3RDPARTY_DIR
+# specify freetype folder in connection with 3RDPARTY_DIR
 if (3RDPARTY_DIR AND EXISTS "${3RDPARTY_DIR}")
   #CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_DIR 3RDPARTY_FREETYPE_DIR PATH "The directory containing freetype")
 
@@ -110,7 +123,25 @@ if (IS_BUILTIN_SEARCH_REQUIRED)
     set (ENV{FREETYPE_DIR} "${3RDPARTY_FREETYPE_DIR}")
   endif()
 
+  unset (FREETYPE_LIBRARY_RELEASE CACHE)
+  unset (FREETYPE_LIBRARY_RELEASE)
+  unset (FREETYPE_LIBRARY_DEBUG CACHE)
+  unset (FREETYPE_LIBRARY_DEBUG)
+  unset (FREETYPE_INCLUDE_DIR_ft2build CACHE)
+  unset (FREETYPE_INCLUDE_DIR_ft2build)
+  unset (FREETYPE_INCLUDE_DIR_freetype2 CACHE)
+  unset (FREETYPE_INCLUDE_DIR_freetype2)
   find_package(Freetype)
+
+  # Only for UNIX (not APPLE)
+  if ((NOT WIN32) AND (NOT APPLE))
+    # To avoid linker error on Ubuntu 18.04 and others linux distributives we should
+    # link with freetype library, compiled as Position Independent Code (PIC),
+    # for example, with shared object.
+    if ((DEFINED FREETYPE_LIBRARY_RELEASE) AND (NOT "${FREETYPE_LIBRARY_RELEASE}" STREQUAL "") AND (EXISTS "${FREETYPE_LIBRARY_RELEASE}"))
+      string (REPLACE "\.a" "\.so" FREETYPE_LIBRARY_RELEASE "${FREETYPE_LIBRARY_RELEASE}")
+    endif()
+  endif()
 
   # restore ENV{FREETYPE_DIR}
   if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
@@ -122,7 +153,7 @@ if (IS_BUILTIN_SEARCH_REQUIRED)
     CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR FREETYPE_INCLUDE_DIR_ft2build FILEPATH "The directory containing ft2build.h header")
     CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR FREETYPE_INCLUDE_DIR_freetype2 FILEPATH "The directory containing ftheader.h header")
     if (BUILD_SHARED_LIBS)
-      CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR FREETYPE_LIBRARY FILEPATH "freetype library")
+      CHECK_PATH_FOR_CONSISTENCY (3RDPARTY_FREETYPE_DIR FREETYPE_LIBRARY_RELEASE FILEPATH "freetype library")
     endif()
   endif()
 
@@ -141,8 +172,8 @@ if (IS_BUILTIN_SEARCH_REQUIRED)
 
   if (BUILD_SHARED_LIBS)
     if (NOT 3RDPARTY_FREETYPE_LIBRARY OR NOT EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
-      if (FREETYPE_LIBRARY AND EXISTS "${FREETYPE_LIBRARY}")
-        set (3RDPARTY_FREETYPE_LIBRARY  "${FREETYPE_LIBRARY}" CACHE FILEPATH "The path to freetype library" FORCE)
+      if (FREETYPE_LIBRARY_RELEASE AND EXISTS "${FREETYPE_LIBRARY_RELEASE}")
+        set (3RDPARTY_FREETYPE_LIBRARY  "${FREETYPE_LIBRARY_RELEASE}" CACHE FILEPATH "The path to freetype library" FORCE)
       endif()
     endif()
 
@@ -151,6 +182,14 @@ if (IS_BUILTIN_SEARCH_REQUIRED)
       set (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" CACHE PATH "The directory containing freetype library" FORCE)
     else()
       set (3RDPARTY_FREETYPE_LIBRARY_DIR "" CACHE PATH "The directory containing freetype library" FORCE)
+    endif()
+  endif()
+
+  # In case of MinGW some libraries can have .dll.a extension, so we should check it and use instead of .a
+  if (MINGW AND 3RDPARTY_FREETYPE_LIBRARY AND EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
+    string (REPLACE ".a" ".dll.a" 3RDPARTY_FREETYPE_LIBRARY_TEST "${3RDPARTY_FREETYPE_LIBRARY}")
+    if (EXISTS "${3RDPARTY_FREETYPE_LIBRARY_TEST}")
+      set (3RDPARTY_FREETYPE_LIBRARY "${3RDPARTY_FREETYPE_LIBRARY_TEST}" CACHE FILEPATH "The path to freetype library" FORCE)
     endif()
   endif()
 endif()
@@ -220,7 +259,12 @@ endif()
 # freetype library
 #if (BUILD_SHARED_LIBS)
   if (NOT 3RDPARTY_FREETYPE_LIBRARY OR NOT EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
-    set (CMAKE_FIND_LIBRARY_SUFFIXES .lib .so .dylib .a)
+    set (FREETYPE_CMAKE_FIND_LIBRARY_SUFFIXES "${CMAKE_FIND_LIBRARY_SUFFIXES}")
+    if (MINGW)
+      set (CMAKE_FIND_LIBRARY_SUFFIXES .dll.a .lib .so .dylib .a)
+    else()
+      set (CMAKE_FIND_LIBRARY_SUFFIXES .lib .so .dylib)
+    endif()
 
     set (FREETYPE_PATH_SUFFIXES lib)
     if (ANDROID)
@@ -242,6 +286,19 @@ endif()
                                               CMAKE_FIND_ROOT_PATH_BOTH)
     endif()
 
+    set (CMAKE_FIND_LIBRARY_SUFFIXES "${FREETYPE_CMAKE_FIND_LIBRARY_SUFFIXES}")
+    unset (FREETYPE_CMAKE_FIND_LIBRARY_SUFFIXES)
+
+    # Only for UNIX (not APPLE)
+    if ((NOT WIN32) AND (NOT APPLE))
+      # To avoid linker error on Ubuntu 18.04 and some others linux distributives we should
+      # link with freetype library, compiled as Position Independent Code (PIC),
+      # for example, with shared object.
+      if ((DEFINED 3RDPARTY_FREETYPE_LIBRARY) AND (NOT "${3RDPARTY_FREETYPE_LIBRARY}" STREQUAL "") AND (EXISTS "${3RDPARTY_FREETYPE_LIBRARY}"))
+        string (REPLACE "\.a" "\.so" 3RDPARTY_FREETYPE_LIBRARY "${3RDPARTY_FREETYPE_LIBRARY}")
+      endif()
+    endif()
+
     if (3RDPARTY_FREETYPE_LIBRARY AND EXISTS "${3RDPARTY_FREETYPE_LIBRARY}")
       get_filename_component (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY}" PATH)
       set (3RDPARTY_FREETYPE_LIBRARY_DIR "${3RDPARTY_FREETYPE_LIBRARY_DIR}" CACHE PATH "The directory containing freetype library" FORCE)
@@ -261,21 +318,24 @@ endif()
   # freetype shared library
   if (WIN32)
     if (NOT 3RDPARTY_FREETYPE_DLL OR NOT EXISTS "${3RDPARTY_FREETYPE_DLL}")
-
-      set (CMAKE_FIND_LIBRARY_SUFFIXES .dll)
-
-      # set 3RDPARTY_FREETYPE_DLL as notfound, otherwise find_library can't assign a new value to 3RDPARTY_FREETYPE_DLL
+      # set 3RDPARTY_FREETYPE_DLL as notfound, otherwise find_file can't assign a new value to 3RDPARTY_FREETYPE_DLL
       set (3RDPARTY_FREETYPE_DLL "3RDPARTY_FREETYPE_DLL-NOTFOUND" CACHE FILEPATH "The path to freetype shared library" FORCE)
 
-      if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
-        find_library (3RDPARTY_FREETYPE_DLL ${CSF_FREETYPE}
-                                            PATHS "${3RDPARTY_FREETYPE_DIR}"
-                                            PATH_SUFFIXES bin
-                                            NO_DEFAULT_PATH)
-      else()
-        find_library (3RDPARTY_FREETYPE_DLL ${CSF_FREETYPE}
-                                            PATH_SUFFIXES bin)
+      set (FREETYPE_DLL_NAMES freetype.dll)
+      if (MINGW)
+        list (APPEND FREETYPE_DLL_NAMES libfreetype-6.dll freetype-6.dll)
       endif()
+
+      if (3RDPARTY_FREETYPE_DIR AND EXISTS "${3RDPARTY_FREETYPE_DIR}")
+        find_file (3RDPARTY_FREETYPE_DLL NAMES ${FREETYPE_DLL_NAMES}
+                                          PATHS "${3RDPARTY_FREETYPE_DIR}"
+                                          PATH_SUFFIXES bin
+                                          NO_DEFAULT_PATH)
+      else()
+        find_file (3RDPARTY_FREETYPE_DLL NAMES ${FREETYPE_DLL_NAMES}
+                                          PATH_SUFFIXES bin)
+      endif()
+      unset (FREETYPE_DLL_NAMES)
 
       if (3RDPARTY_FREETYPE_DLL AND EXISTS "${3RDPARTY_FREETYPE_DLL}")
         get_filename_component (3RDPARTY_FREETYPE_DLL_DIR "${3RDPARTY_FREETYPE_DLL}" PATH)
@@ -287,7 +347,7 @@ endif()
       endif()
     endif()
 
-    if (3RDPARTY_FREETYPE_DLL_DIR OR EXISTS "${3RDPARTY_FREETYPE_DLL_DIR}")
+    if (3RDPARTY_FREETYPE_DLL_DIR AND EXISTS "${3RDPARTY_FREETYPE_DLL_DIR}")
       list (APPEND 3RDPARTY_DLL_DIRS "${3RDPARTY_FREETYPE_DLL_DIR}")
     else()
       list (APPEND 3RDPARTY_NO_DLLS 3RDPARTY_FREETYPE_DLL_DIR)
@@ -347,10 +407,10 @@ endif()
   endif()
 #endif()
 
-# unset all redundant variables
-OCCT_CHECK_AND_UNSET(FREETYPE_INCLUDE_DIR_ft2build)
-OCCT_CHECK_AND_UNSET(FREETYPE_INCLUDE_DIR_freetype2)
-OCCT_CHECK_AND_UNSET(FREETYPE_LIBRARY)
+# hide all redundant variables
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+mark_as_advanced(FREETYPE_LIBRARY_RELEASE)
 
 if (BUILD_SHARED_LIBS)
   mark_as_advanced (3RDPARTY_FREETYPE_LIBRARY 3RDPARTY_FREETYPE_DLL)

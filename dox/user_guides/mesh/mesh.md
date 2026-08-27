@@ -16,7 +16,7 @@ Open CASCADE Technology includes two mesh converters:
 - VRML converter translates Open CASCADE shapes to VRML 1.0 files (Virtual Reality Modeling Language). Open CASCADE shapes may be translated in two representations: shaded or wireframe. A shaded representation present shapes as sets of triangles computed by a mesh algorithm while a wireframe representation present shapes as sets of curves.
 - STL converter translates Open CASCADE shapes to STL files. STL (STtereoLithography) format is widely used for rapid prototyping.
 
-Open CASCADE SAS also offers Advanced Mesh Products:
+Open CASCADE also offers Advanced Mesh Products (commercial product pages, URLs may change):
 - <a href="https://www.opencascade.com/content/mesh-framework">Open CASCADE Mesh Framework (OMF)</a>
 - <a href="https://www.opencascade.com/content/express-mesh">Express Mesh</a>
 
@@ -30,46 +30,46 @@ Learn more about SALOME platform on https://www.salome-platform.org
 
 The algorithm of shape triangulation is provided by the functionality of *BRepMesh_IncrementalMesh* class, which adds a triangulation of the shape to its topological data structure. This triangulation is used to visualize the shape in shaded mode.
 
-~~~~~
+~~~~{.cpp}
 #include <IMeshData_Status.hxx>
 #include <IMeshTools_Parameters.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 
-Standard_Boolean meshing_explicit_parameters()
+bool meshing_explicit_parameters()
 {
-  const Standard_Real aRadius = 10.0; 
-  const Standard_Real aHeight = 25.0; 
+  const double aRadius = 10.0; 
+  const double aHeight = 25.0; 
   BRepPrimAPI_MakeCylinder aCylinder(aRadius, aHeight); 
   TopoDS_Shape aShape = aCylinder.Shape();
 
-  const Standard_Real aLinearDeflection   = 0.01;
-  const Standard_Real anAngularDeflection = 0.5;
-  BRepMesh_IncrementalMesh aMesher (aShape, aLinearDeflection, Standard_False, anAngularDeflection, Standard_True);
-  const Standard_Integer aStatus = aMesher.GetStatusFlags();
+  const double aLinearDeflection   = 0.01;
+  const double anAngularDeflection = 0.5;
+  BRepMesh_IncrementalMesh aMesher (aShape, aLinearDeflection, false, anAngularDeflection, true);
+  const int aStatus = aMesher.GetStatusFlags();
   return !aStatus;
 }
 
-Standard_Boolean meshing_imeshtools_parameters()
+bool meshing_imeshtools_parameters()
 {
-  const Standard_Real aRadius = 10.0; 
-  const Standard_Real aHeight = 25.0; 
+  const double aRadius = 10.0; 
+  const double aHeight = 25.0; 
   BRepPrimAPI_MakeCylinder aCylinder(aRadius, aHeight); 
   TopoDS_Shape aShape = aCylinder.Shape();
   
   IMeshTools_Parameters aMeshParams;
   aMeshParams.Deflection               = 0.01;
   aMeshParams.Angle                    = 0.5;
-  aMeshParams.Relative                 = Standard_False;
-  aMeshParams.InParallel               = Standard_True;
+  aMeshParams.Relative                 = false;
+  aMeshParams.InParallel               = true;
   aMeshParams.MinSize                  = Precision::Confusion();
-  aMeshParams.InternalVerticesMode     = Standard_True;
-  aMeshParams.ControlSurfaceDeflection = Standard_True;
+  aMeshParams.InternalVerticesMode     = true;
+  aMeshParams.ControlSurfaceDeflection = true;
 
   BRepMesh_IncrementalMesh aMesher (aShape, aMeshParams);
-  const Standard_Integer aStatus = aMesher.GetStatusFlags();
+  const int aStatus = aMesher.GetStatusFlags();
   return !aStatus;
 }
-~~~~~
+~~~~
 
 The default meshing algorithm *BRepMesh_IncrementalMesh* has two major options to define triangulation -- linear and angular deflections. 
 
@@ -87,13 +87,13 @@ Note that if a given value of linear deflection is less than shape tolerance the
 
 The application should provide deflection parameters to compute a satisfactory mesh. Angular deflection is relatively simple and allows using a default value (12-20 degrees). Linear deflection has an absolute meaning and the application should provide the correct value for its models. Giving small values may result in a too huge mesh (consuming a lot of memory, which results in a  long computation time and slow rendering) while big values result in an ugly mesh.
 
-For an application working in dimensions known in advance it can be reasonable to use the absolute linear deflection for all models. This provides meshes according to metrics and precision used in the application (for example, it it is known that the model will be stored in meters, 0.004 m is enough for most tasks).
+For an application working in dimensions known in advance it can be reasonable to use the absolute linear deflection for all models. This provides meshes according to metrics and precision used in the application (for example, it is known that the model will be stored in meters, 0.004 m is enough for most tasks).
 
 However, an application that imports models created in other applications may not use the same deflection for all models. Note that actually this is an abnormal situation and this application is probably just a viewer for CAD models with  dimensions varying by an order of magnitude. This problem can be solved by introducing the concept of a relative linear deflection with some  LOD (level of detail). The level of detail is a scale factor for absolute deflection, which is applied to model dimensions.
 
 Meshing covers a shape with a triangular mesh. Other than hidden line removal, you can use meshing to transfer the shape to another tool: a manufacturing tool, a shading algorithm, a finite element algorithm, or a collision algorithm. 
 
-You can obtain information on the shape by first exploring it. To access triangulation of a face in the shape later, use *BRepTool::Triangulation*. To access a polygon, which is the approximation of an edge of the face, use *BRepTool::PolygonOnTriangulation*.
+You can obtain information on the shape by first exploring it. To access triangulation of a face in the shape later, use *BRep_Tool::Triangulation*. To access a polygon, which is the approximation of an edge of the face, use *BRep_Tool::PolygonOnTriangulation*.
 
 @section occt_modalg_11_3 BRepMesh Architecture
 @subsection occt_modalg_11_3_1 Goals
@@ -137,7 +137,7 @@ The data structures intended to keep discrete and temporary data required by und
 #### Data model interface
 Unit <i>IMeshData</i> provides common interfaces specifying the data model API used on different stages of the entire workflow. Dependencies and references of the designed interfaces are given in the figure below. A specific interface implementation depends on the target application which allows the developer to implement different models and use custom low-level data structures, e.g. different collections, either <i>NCollection</i> or STL. *IMeshData_Shape* is used as the base class for all data structures and tools keeping the topological shape in order to avoid possible copy-paste.
 
-The default implementation of interfaces is given in <i>BRepMeshData</i> unit. The main aim of the default data model is to provide features performing discretization of edges in a parallel mode. Thus, curve, pcurve and other classes are based on STL containers and smart-pointers as far as <i>NCollection</i> does not provide thread-safety for some cases (e.g. *NCollection_Sequence*). In addition, it closely reflects topology of the source shape, i.e. the number of edges in the data model is equal to the number of edges in the source model; each edge contains a set of pcurves associated with its adjacent faces which allows creation of discrete polygons for all pcurves or the 3D curve of a particular edge in a separate thread.
+The default implementation of interfaces is given in <i>BRepMeshData</i> unit. The main aim of the default data model is to support discretization of edges in parallel. Curve, pcurve and other classes are therefore based on STL containers and smart pointers, which compose better with the parallel pipeline than legacy `NCollection_Sequence` (whose use is discouraged in new code). The model closely reflects the topology of the source shape: the number of edges in the data model is equal to the number of edges in the source model; each edge contains a set of pcurves associated with its adjacent faces, which allows creation of discrete polygons for all pcurves or the 3D curve of a particular edge in a separate thread.
 
 **Advantages**:
 In case of necessity, the data model (probably with algorithms for its processing) can be easily substituted by another implementation supporting another kind of dependencies between elements.
@@ -194,7 +194,7 @@ OCCT comes with two base 2D meshing algorithms: *BRepMesh_MeshAlgoFactory* (used
 
 The following example demonstrates how it could be done from *Draw* environment:
 
-~~~~~
+~~~~{.tcl}
 psphere s 10
 
 ### Default Algo ###
@@ -202,13 +202,13 @@ incmesh s 0.0001 -algo default
 
 ### Delabella Algo ###
 incmesh s 0.0001 -algo delabella
-~~~~~
+~~~~
 
 The code snippet below shows passing a custom mesh factory to BRepMesh_IncrementalMesh:
 
-~~~~~
+~~~~{.cpp}
 IMeshTools_Parameters aMeshParams;
-Handle(IMeshTools_Context) aContext = new BRepMesh_Context();
+occ::handle<IMeshTools_Context> aContext = new BRepMesh_Context();
 aContext->SetFaceDiscret (new BRepMesh_FaceDiscret (new BRepMesh_DelabellaMeshAlgoFactory()));
 
 BRepMesh_IncrementalMesh aMesher;
@@ -216,7 +216,7 @@ aMesher.SetShape (aShape);
 aMesher.ChangeParameters() = aMeshParams;
 
 aMesher.Perform (aContext);
-~~~~~
+~~~~
 
 #### Range splitter
 Range splitter tools provide functionality to generate internal surface nodes defined within the range computed using discrete model data. The base functionality is provided by *BRepMesh_DefaultRangeSplitter* which can be used without modifications in case of planar surface. The default splitter does not generate any internal node.

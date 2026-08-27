@@ -9,6 +9,8 @@ BRep Format {#specification__brep_format}
   of vertices, edges, wires, faces, shells, solids,  compsolids, compounds, edge triangulations, 
   face triangulations, polylines on  triangulations, space location and orientation. 
   Any set of such models may be  stored as a single model which is a compound of the models.  
+
+  @note This document describes the **ASCII** BREP format produced by `BRepTools` (`Write` / `Read`), whose header line is `CASCADE Topology V1/V2/V3`. OCCT also ships a **binary** BREP format, produced by the `BinTools` package (`BinTools::Write` / `BinTools::Read`), with its own independent header sequence (`Open CASCADE Topology V1`..`V4`). The two formats share most of the geometric content but differ in framing and tokenization, and are not interchangeable.
    
   The format is described in an order which is convenient for understanding 
   rather than in the order the format parts follow each other. 
@@ -35,12 +37,12 @@ Each of these methods has two arguments:
 
 The following sample code reads a shape from ASCII file and writes it to a binary one:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cpp}
+~~~~{.cpp}
   TopoDS_Shape aShape;
   if (BRepTools::Read (aShape, "source_file.txt")) {
     BinTools::Write (aShape, "result_file.bin");
   }
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
  
 @section specification__brep_format_3 Format Common Structure
  
@@ -52,7 +54,7 @@ The following sample code reads a shape from ASCII file and writes it to a binar
   * \<_\\n\>: = " "*\<\\n\>;
   * \<_\>: = " "+; It is a not empty sequence of space characters  with ASCII code 21h;
   * \<flag\>: = "0" | "1";
-  * \<int\>: It is an integer number from -2<sup>31</sup> to 2<sup>31</sup>-1 which is written in  denary system;  
+  * \<int\>: It is an integer number from -2<sup>31</sup> to 2<sup>31</sup>-1 which is written in  decimal system;
   * \<real\>: It is a real from -1.7976931348623158 @f$\cdot@f$ 10<sup>308</sup> to 1.7976931348623158 @f$\cdot@f$ 10<sup>308</sup> which is written in decimal or E form with base 10.The point is used as a delimiter of the integer and  fractional parts;
   * \<short real\>: It is a real from -3.402823 @f$\cdot@f$ 10<sup>38</sup> to 3.402823 @f$\cdot@f$ 10<sup>38</sup> which is written in decimal or E form with base 10.The point is used as a delimiter of the integer and  fractional parts;
   * \<2D point\>: = \<real\>\<_\>\<real\>;  
@@ -72,7 +74,7 @@ The following sample code reads a shape from ASCII file and writes it to a binar
   \<content type\> = "DBRep_DrawableShape" \<_\\n\>\<_\\n\>;  
   \<content type\> have other values [1].  
  
-  \<version\> = ("CASCADE Topology V1, (c)  Matra-Datavision" | "CASCADE Topology V2, (c) Matra-Datavision" | "CASCADE Topology V3, (c) Open Cascade")\<_\\n\>;
+  \<version\> = ("CASCADE Topology V1, (c) Matra-Datavision" | "CASCADE Topology V2, (c) Matra-Datavision" | "CASCADE Topology V3, (c) Open Cascade")\<_\\n\>;
   The difference of the versions is described in the  document.  
  
   Sections \<locations\>, \<geometry\> and \<shapes\> are described below in separate chapters of the document.  
@@ -250,7 +252,7 @@ The example record is interpreted as a line which  passes through a point *P*=(1
  
 **BNF-like Definition**
  
-~~~~
+~~~~{.cpp}
     <3D curve record 2> = "2" <_> <3D circle center> <_> <3D circle N> <_> <3D circle Dx> <_> <3D circle Dy> <_> <3D circle radius> <_\n>;  
      
     <3D circle center> = <3D point>;  
@@ -283,7 +285,7 @@ The  example record is interpreted as a circle which has its center *P*=(1, 2, 3
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
     <3D curve record 3> = "3" <_> <3D ellipse center> <_> <3D ellipse N> <_> <3D ellipse Dmaj> <_> <3D ellipse Dmin> <_> <3D ellipse Rmaj> <_> <3D ellipse Rmin> <_\n>;  
      
     <3D ellipse center> = <3D point>;  
@@ -318,7 +320,7 @@ The  example record is interpreted as an ellipse which has its center *P*=(1, 2,
  
 **BNF-like Definition**  
 
-~~~~
+~~~~{.cpp}
     <3D curve record 4> = "4" <_> <3D parabola origin> <_> <3D parabola N> <_> <3D parabola Dx> <_> <3D parabola Dy> <_> <3D parabola focal length> <_\n>;  
      
     <3D parabola origin> = <3D point>;  
@@ -352,7 +354,7 @@ The  example record is interpreted as a parabola in plane which passes through a
  
 **BNF-like Definition**  
 
-~~~~
+~~~~{.cpp}
     <3D curve record 5> = "5" <_> <3D hyperbola origin> <_> <3D hyperbola N> <_> <3D hyperbola Dx> <_> <3D hyperbola Dy> <_> <3D hyperbola Kx> <_> <3D hyperbola Ky> <_\n>;  
      
     <3D hyperbola origin> = <3D point>;  
@@ -428,7 +430,7 @@ The example record is interpreted as a Bezier curve with a rational flag *r*=1, 
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<3D curve record 7> = "7" <_> <3D B-spline rational flag> <_> "0" <_> <3D B-spline degree> <_> 
 	<3D B-spline pole count> <_> <3D B-spline multiplicity knot count> <3D B-spline weight poles> 
 	<_\n> <3D B-spline multiplicity knots> <_\n>;
@@ -492,7 +494,7 @@ The example record is interpreted as a B-spline curve  with a rational flag *r*=
  
 **BNF-like Definition**  
 
-~~~~
+~~~~{.cpp}
 	<3D curve record 8> = "8" <_> <3D trimmed curve u min> <_> <3D trimmed curve u max> <_\n> <3D curve record>;
 
 	<3D trimmed curve u min> = <real>;
@@ -764,7 +766,7 @@ where @f$ V(v)=(5,2,0)+4 \cdot (cos(v) \cdot (1,0,0)+sin(v) \cdot (0,1,0)), V_{D
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<surface record 8> = "8" <_> <Bezier surface u rational flag> <_> <Bezier surface v rational flag> <_> <Bezier surface u degree> <_> <Bezier surface v degree> <_> 
 	<Bezier surface weight poles>;
 
@@ -1076,7 +1078,7 @@ The example record is interpreted as a line which  passes through a point *P*=(3
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<2D curve record 2> = "2" <_> <2D circle center> <_> <2D circle Dx> <_> <2D circle Dy> <_> <2D circle radius> <_\n>;
 
 	<2D circle center> = <2D point>;
@@ -1124,7 +1126,7 @@ The example record is interpreted as a circle which  has a center *P*=(1,2).  Th
  
 **Description**  
  
-\<2D curve record 3\> describes an ellipse. The  ellipse data are 2D point *P*, orthogonal 2D directions *D<sub>maj</sub>* and *D<sub>min</sub>* and non-negative reals *r<sub>maj</sub>* and *r<sub>min</sub>* that *r<sub>maj</sub>* @f$ \leq @f$ *r<sub>min</sub>*. The ellipse has a center *P*, major and  minor axis directions *D<sub>maj</sub>* and *D<sub>min</sub>*, major and minor radii *r<sub>maj</sub>* and *r<sub>min</sub>* and is defined by  the following parametric equation:  
+\<2D curve record 3\> describes an ellipse. The  ellipse data are 2D point *P*, orthogonal 2D directions *D<sub>maj</sub>* and *D<sub>min</sub>* and non-negative reals *r<sub>maj</sub>* and *r<sub>min</sub>* that *r<sub>maj</sub>* @f$ \geq @f$ *r<sub>min</sub>*. The ellipse has a center *P*, major and  minor axis directions *D<sub>maj</sub>* and *D<sub>min</sub>*, major and minor radii *r<sub>maj</sub>* and *r<sub>min</sub>* and is defined by  the following parametric equation:  
  
 @f[ C(u)=P+r_{maj} \cdot cos(u) \cdot D_{maj}+r_{min} \cdot sin(u) \cdot D_{min},\; u \in [0,\; 2 \cdot \pi) . @f]  
  
@@ -1191,9 +1193,9 @@ The example record is interpreted as a parabola in plane which passes through a 
  
 \<2D curve record 5\> describes a hyperbola. The  hyperbola data consist of a 2D point *P*, orthogonal 2D directions *D<sub>x</sub>* and *D<sub>y</sub>* and non-negative reals *k<sub>x</sub>* and *k<sub>y</sub>*. The hyperbola coordinate system has origin *P* and axis directions *D<sub>x</sub>* and *D<sub>y</sub>*. The hyperbola is defined by  the following parametric equation:  
  
-@f[ C(u)=P+k_{x} \cdot cosh(u) D_{x}+k_{y} \cdot sinh(u) \cdot D_{y},\; u \in (-\infty,\; \infty). @f]  
+@f[ C(u)=P+k_{x} \cdot cosh(u) \cdot D_{x}+k_{y} \cdot sinh(u) \cdot D_{y},\; u \in (-\infty,\; \infty). @f]  
  
-The example record is interpreted as a hyperbola with  coordinate system which has origin *P*=(1,2) and axis directions *D<sub>x</sub>*=(1,0) and *D<sub>y</sub>*=(0,1). Other data for the hyperbola are *k<sub>x</sub>*=5 and *k<sub>y</sub>*=4. The hyperbola is defined  by the following parametric equation: @f$ C(u)=(1,2)+3 \cdot cosh(u) \cdot (1,0)+4 \cdot sinh(u) \cdot (0,1) @f$.  
+The example record is interpreted as a hyperbola with  coordinate system which has origin *P*=(1,2) and axis directions *D<sub>x</sub>*=(1,0) and *D<sub>y</sub>*=(0,1). Other data for the hyperbola are *k<sub>x</sub>*=3 and *k<sub>y</sub>*=4. The hyperbola is defined  by the following parametric equation: @f$ C(u)=(1,2)+3 \cdot cosh(u) \cdot (1,0)+4 \cdot sinh(u) \cdot (0,1) @f$.  
  
  
 @subsubsection specification__brep_format_5_3_6 Bezier Curve - \<2D curve record 6\>
@@ -1247,7 +1249,7 @@ The example record is interpreted as a Bezier curve  with a rational flag *r*=1,
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<2D curve record 7> = "7" <_> <2D B-spline rational flag> <_> "0" <_> <2D B-spline degree> <_> <2D B-spline pole count> <_> <2D B-spline multiplicity knot count> <2D B-spline weight poles> <_\n> <2D B-spline multiplicity knots> <_\n>;
 
 	<2D B-spline rational flag> = <flag>;
@@ -1430,7 +1432,7 @@ The example record describes a polyline from *m*=2 nodes with a parameter prese
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<triangulations> = <triangulation header> <_\n> <triangulation records>;
 
 	<triangulation header> = "Triangulations" <_> <triangulation count>;
@@ -1707,7 +1709,7 @@ The terms below are used by \<vertex data\>, \<edge data\> and \<face data\>.
 	<curve parameter minimal and maximal values> = <real> <_> <real>;
 
 	<curve values for parameter minimal and maximal values> =
-	real> <_> <real> <_> <real> <_> <real>;
+	<real> <_> <real> <_> <real> <_> <real>;
 @endverbatim
  
 **Description**  
@@ -1785,8 +1787,8 @@ The usage of \<vertex data representation u  parameter\> *U* is  described belo
  
 **BNF-like Definition**
 
-~~~~
-	<edge data> = <_> <edge data tolerance> <_> <edge data same parameter flag> <_> edge data same range flag> <_> <edge data degenerated flag> <_\n> <edge data representations>;
+~~~~{.cpp}
+	<edge data> = <_> <edge data tolerance> <_> <edge data same parameter flag> <_> <edge data same range flag> <_> <edge data degenerated flag> <_\n> <edge data representations>;
 
 	<edge data tolerance> = <real>;
 
@@ -1814,7 +1816,7 @@ The usage of \<vertex data representation u  parameter\> *U* is  described belo
 	<location number> <_> <curve parameter minimal and maximal values>
 	[<_\n> <curve values for parameter minimal and maximal values>];
 
-	<edge data representation data 3> = (<2D curve number> <_>) ^ 2 <continuity order> <_> <surface number> <_> <location number> <_> <curve parameter minimal and maximal values> <\n> <curve values for parameter minimal and maximal values>];
+	<edge data representation data 3> = (<2D curve number> <_>) ^ 2 <continuity order> <_> <surface number> <_> <location number> <_> <curve parameter minimal and maximal values> <\n> <curve values for parameter minimal and maximal values>;
 
 	<continuity order> = "C0" | "C1" | "C2" | "C3" | "CN" | "G1" | "G2".
 
@@ -1855,7 +1857,7 @@ Flags \<edge data same parameter flag\>, \<edge data same range flag\> and \<edg
  
 **BNF-like Definition**
 
-~~~~
+~~~~{.cpp}
 	<face data> = <face data natural restriction flag> <_> <face data tolerance> <_> <surface number> <_> <location number> <\n> ["2" <_> <triangulation number>];
 
 	<face data natural restriction flag> = <flag>;
@@ -1881,7 +1883,7 @@ Flag \<face data natural restriction flag\> is  used in a special way [1].
 @verbatim
     DBRep_DrawableShape  
      
-    CASCADE Topology V1, (c)  Matra-Datavision  
+    CASCADE Topology V1, (c) Matra-Datavision  
     Locations 3  
     1  
                   0                0               1               0   

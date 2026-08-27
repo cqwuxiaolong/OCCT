@@ -3,12 +3,16 @@
 # go to the script directory
 aScriptPath=${BASH_SOURCE%/*}; if [ -d "${aScriptPath}" ]; then cd "$aScriptPath"; fi; aScriptPath="$PWD";
 
+aSystem=`uname -s`
+
 # Reset values
 export CASROOT="__CASROOT__"
 export CASDEB=""
 export PRJFMT="";
 export HAVE_TBB="false";
 export HAVE_OPENCL="false";
+export HAVE_TK="true";
+export HAVE_FREETYPE="true";
 export HAVE_FREEIMAGE="false";
 export HAVE_FFMPEG="false";
 export HAVE_VTK="false";
@@ -16,9 +20,13 @@ export HAVE_GLES2="false";
 export HAVE_ZLIB="false";
 export HAVE_LIBLZMA="false";
 export HAVE_RAPIDJSON="false";
+export HAVE_DRACO="false";
 export HAVE_OPENVR="false";
 export HAVE_E57="false";
-export MACOSX_USE_GLX="false";
+export HAVE_XLIB="true";
+if [ "$aSystem" == "Darwin" ]; then
+  export HAVE_XLIB="false";
+fi
 export CSF_OPT_INC=""
 export CSF_OPT_LIB32=""
 export CSF_OPT_LIB64=""
@@ -52,16 +60,14 @@ shopt -u nocasematch
 
 # ----- Setup Environment Variables -----
 anArch=`uname -m`
-if [ "$anArch" != "x86_64" ] && [ "$anArch" != "ia64" ]; then
+if [ "$anArch" != "x86_64" ] && [ "$anArch" != "ia64" ] && [ "$anArch" != "aarch64" ] && [ "$anArch" != "arm64" ]; then
   export ARCH="32";
 else
   export ARCH="64";
 fi
 
-aSystem=`uname -s`
 if [ "$aSystem" == "Darwin" ]; then
   export WOKSTATION="mac";
-  export ARCH="64";
 else
   export WOKSTATION="lin";
 fi
@@ -97,20 +103,22 @@ fi
 
 export CSF_OPT_CMPL=""
 
-# Optiona 3rd-parties should be enabled by HAVE macros
+# Optional 3rd-parties should be enabled by HAVE macros
 if [ "$HAVE_TBB"       == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_TBB"; fi
 if [ "$HAVE_OPENCL"    == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_OPENCL"; fi
+if [ "$HAVE_TK"        == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_TK"; fi
+if [ "$HAVE_FREETYPE"  == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_FREETYPE"; fi
 if [ "$HAVE_FREEIMAGE" == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_FREEIMAGE"; fi
 if [ "$HAVE_FFMPEG"    == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_FFMPEG"; fi
-if [ "$HAVE_GLES2"     == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_GLES2"; fi
+if [ "$HAVE_GLES2"     == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_GLES2_EXT"; fi
 if [ "$HAVE_VTK"       == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_VTK"; fi
 if [ "$HAVE_ZLIB"      == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_ZLIB"; fi
 if [ "$HAVE_LIBLZMA"   == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_LIBLZMA"; fi
 if [ "$HAVE_RAPIDJSON" == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_RAPIDJSON"; fi
+if [ "$HAVE_DRACO"     == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_DRACO"; fi
 if [ "$HAVE_OPENVR"    == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_OPENVR"; fi
 if [ "$HAVE_E57"       == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_E57"; fi
-# Option to compile OCCT with X11 libs on Mac OS X
-if [ "$MACOSX_USE_GLX" == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DMACOSX_USE_GLX"; fi
+if [ "$HAVE_XLIB"      == "true" ]; then export CSF_OPT_CMPL="${CSF_OPT_CMPL} -DHAVE_XLIB"; fi
 
 # To split string into array
 aDelimBack=$IFS
@@ -180,7 +188,6 @@ fi
 # ----- Default paths to sub-folders (can be different in install env) -----
 export CSF_OCCTIncludePath="${CSF_OCCTIncludePath:-$CASROOT/inc}"
 export CSF_OCCTResourcePath="${CSF_OCCTResourcePath:-$CASROOT/src}"
-export CSF_OCCTSamplesPath="${CSF_OCCTSamplesPath:-$CASROOT/samples}"
 export CSF_OCCTDataPath="${CSF_OCCTDataPath:-$CASROOT/data}"
 export CSF_OCCTTestsPath="${CSF_OCCTTestsPath:-$CASROOT/tests}"
 

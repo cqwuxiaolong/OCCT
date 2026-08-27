@@ -1,4 +1,15 @@
-# FFmpeg
+# vcpkg processing
+if (BUILD_USE_VCPKG)
+  find_package(FFMPEG REQUIRED)
+  set(CSF_FFmpeg ${FFMPEG_LIBRARIES})
+  if (WIN32)
+    set (USED_3RDPARTY_FREEIMAGE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
+  else()
+    set (USED_3RDPARTY_FREEIMAGE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+  endif()
+  list (APPEND 3RDPARTY_INCLUDE_DIRS "${FFMPEG_INCLUDE_DIRS}")
+  return()
+endif()
 
 if (NOT DEFINED INSTALL_FFMPEG)
   set (INSTALL_FFMPEG OFF CACHE BOOL "${INSTALL_FFMPEG_DESCR}")
@@ -191,13 +202,13 @@ foreach (LIBRARY_NAME ${CSF_FFmpeg})
       else()
         install (FILES "${3RDPARTY_FFMPEG_DLL_${LIBRARY_NAME}}"
                  CONFIGURATIONS Release
-                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/bin")
+                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/${INSTALL_DIR_BIN}")
         install (FILES "${3RDPARTY_FFMPEG_DLL_${LIBRARY_NAME}}"
                  CONFIGURATIONS RelWithDebInfo
-                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/bini")
+                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/${INSTALL_DIR_BIN}i")
         install (FILES "${3RDPARTY_FFMPEG_DLL_${LIBRARY_NAME}}"
                  CONFIGURATIONS Debug
-                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/bind")
+                 DESTINATION "${INSTALL_DIR}/${OS_WITH_BIT}/${COMPILER}/${INSTALL_DIR_BIN}d")
       endif()
     else()
       get_filename_component(3RDPARTY_FFMPEG_LIBRARY_ABS ${3RDPARTY_FFMPEG_LIBRARY_${LIBRARY_NAME}} REALPATH)
@@ -236,7 +247,7 @@ foreach (LIBRARY_NAME ${CSF_FFmpeg})
   mark_as_advanced (3RDPARTY_FFMPEG_LIBRARY_${LIBRARY_NAME} 3RDPARTY_FFMPEG_DLL_${LIBRARY_NAME})
 endforeach()
 
-# unset all redundant variables
-OCCT_CHECK_AND_UNSET (FFMPEG_INCLUDE_DIRS)
-OCCT_CHECK_AND_UNSET (FFMPEG_LIBRARY_DIRS)
-OCCT_CHECK_AND_UNSET (FFMPEG_DIR)
+# hide all redundant variables
+mark_as_advanced (FFMPEG_INCLUDE_DIRS)
+mark_as_advanced (FFMPEG_LIBRARY_DIRS)
+mark_as_advanced (FFMPEG_DIR)

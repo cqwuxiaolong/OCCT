@@ -17,6 +17,8 @@ set "ARCH=64"
 set "VCVARS="
 set "HAVE_TBB=false"
 set "HAVE_OPENCL=false"
+set "HAVE_TK=true"
+set "HAVE_FREETYPE=true"
 set "HAVE_FREEIMAGE=false"
 set "HAVE_FFMPEG=false"
 set "HAVE_VTK=false"
@@ -25,6 +27,7 @@ set "HAVE_D3D=false"
 set "HAVE_ZLIB=false"
 set "HAVE_LIBLZMA=false"
 set "HAVE_RAPIDJSON=false"
+set "HAVE_DRACO=false"
 set "HAVE_OPENVR=false"
 set "HAVE_E57=false"
 set "CSF_OPT_INC="
@@ -32,6 +35,14 @@ set "CSF_OPT_LIB32="
 set "CSF_OPT_LIB64="
 set "CSF_OPT_BIN32="
 set "CSF_OPT_BIN64="
+set "CSF_OPT_LIB32D="
+set "CSF_OPT_LIB64D="
+set "CSF_OPT_BIN32D="
+set "CSF_OPT_BIN64D="
+set "CSF_OPT_LIB32I="
+set "CSF_OPT_LIB64I="
+set "CSF_OPT_BIN32I="
+set "CSF_OPT_BIN64I="
 set "CSF_DEFINES=%CSF_DEFINES_EXTRA%"
 
 if not ["%CASROOT%"] == [""] if exist "%SCRIPTROOT%\%CASROOT%" set "CASROOT=%SCRIPTROOT%\%CASROOT%"
@@ -56,9 +67,9 @@ rem Decode VCVER variable and define related ones:
 rem
 rem VCFMT - "vc" followed by full version number of Visual Studio toolset
 rem         (same as VCVER without optional suffix "-uwp")
-rem VCLIB - name of folder contining binaries
+rem VCLIB - name of folder containing binaries
 rem         (same as VCVER except without third version in number)
-rem VCPROP - name of required Visual Studion Workload (starting with VS 2017)
+rem VCPROP - name of required Visual Studio Workload (starting with VS 2017)
 rem
 rem Note that for VS before 2015 (vc14) always
 rem VCFMT=VCLIB=VCVER and VCPROP=NativeDesktop
@@ -110,12 +121,18 @@ if not "%DevEnvDir%" == "" (
   for /f "usebackq delims=" %%i in (`vswhere.exe -version "[16.0,16.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
     set "DevEnvDir=%%i\Common7\IDE\"
   )
+) else if /I "%VCFMT%" == "vc143" (
+  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[17.0,17.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
+    set "DevEnvDir=%%i\Common7\IDE\"
+  )
 ) else if /I "%VCFMT%" == "vclang" (
-  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[16.0,16.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
+  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[16.0,17.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
     set "DevEnvDir=%%i\Common7\IDE\"
   )
 ) else if /I "%VCFMT%" == "gcc" (
   rem MinGW
+) else if /I "%VCFMT%" == "clang" (
+  rem clang
 ) else (
   echo Error: first argument ^(%VCVER%^) should specify supported version of Visual C++, 
   echo one of: 
@@ -126,6 +143,7 @@ if not "%DevEnvDir%" == "" (
   echo vc14  = VS 2015
   echo vc141 = VS 2017
   echo vc142 = VS 2019
+  echo vc143 = VS 2022
   echo vclang = VS 2019 with ClangCL toolset
   exit /B
 )
@@ -156,40 +174,50 @@ if /I "%VCFMT%" == "vc9" (
     set "VCVARS=%%i\VC\Auxiliary\Build\vcvarsall.bat"
   ) 
   set "VCPlatformToolSet=v142"
-) else if /I "%VCFMT%" == "vclang" (
-  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[16.0,16.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
+) else if /I "%VCFMT%" == "vc143" (
+  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[17.0,17.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
     set "VCVARS=%%i\VC\Auxiliary\Build\vcvarsall.bat"
   ) 
+  set "VCPlatformToolSet=v143"
+) else if /I "%VCFMT%" == "vclang" (
+  for /f "usebackq delims=" %%i in (`vswhere.exe -version "[16.0,17.99]" -latest -requires Microsoft.VisualStudio.Workload.%VCPROP% -property installationPath`) do (
+    set "VCVARS=%%i\VC\Auxiliary\Build\vcvarsall.bat"
+  )
   set "VCPlatformToolSet=ClangCL"
 ) else if /I "%VCFMT%" == "gcc" (
   rem MinGW
+) else if /I "%VCFMT%" == "clang" (
+  rem clang
 ) else (
   echo Error: wrong VS identifier
   exit /B
 )
 
-set "CSF_OPT_LIB32D=%CSF_OPT_LIB32%"
-set "CSF_OPT_LIB64D=%CSF_OPT_LIB64%"
-set "CSF_OPT_BIN32D=%CSF_OPT_BIN32%"
-set "CSF_OPT_BIN64D=%CSF_OPT_BIN64%"
-set "CSF_OPT_LIB32I=%CSF_OPT_LIB32%"
-set "CSF_OPT_LIB64I=%CSF_OPT_LIB64%"
-set "CSF_OPT_BIN32I=%CSF_OPT_BIN32%"
-set "CSF_OPT_BIN64I=%CSF_OPT_BIN64%"
+if ["%CSF_OPT_LIB32D%"] == [""] set "CSF_OPT_LIB32D=%CSF_OPT_LIB32%"
+if ["%CSF_OPT_LIB64D%"] == [""] set "CSF_OPT_LIB64D=%CSF_OPT_LIB64%"
+if ["%CSF_OPT_BIN32D%"] == [""] set "CSF_OPT_BIN32D=%CSF_OPT_BIN32%"
+if ["%CSF_OPT_BIN64D%"] == [""] set "CSF_OPT_BIN64D=%CSF_OPT_BIN64%"
+if ["%CSF_OPT_LIB32I%"] == [""] set "CSF_OPT_LIB32I=%CSF_OPT_LIB32%"
+if ["%CSF_OPT_LIB64I%"] == [""] set "CSF_OPT_LIB64I=%CSF_OPT_LIB64%"
+if ["%CSF_OPT_BIN32I%"] == [""] set "CSF_OPT_BIN32I=%CSF_OPT_BIN32%"
+if ["%CSF_OPT_BIN64I%"] == [""] set "CSF_OPT_BIN64I=%CSF_OPT_BIN64%"
 
 rem ----- Optional 3rd-parties should be enabled by HAVE macros -----
 set "CSF_OPT_CMPL="
 set "PRODUCTS_DEFINES="
 if ["%HAVE_TBB%"]       == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_TBB"       & set "CSF_DEFINES=HAVE_TBB;%CSF_DEFINES%"
 if ["%HAVE_OPENCL%"]    == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_OPENCL"    & set "CSF_DEFINES=HAVE_OPENCL;%CSF_DEFINES%"
+if ["%HAVE_TK%"]        == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_TK"        & set "CSF_DEFINES=HAVE_TK;%CSF_DEFINES%"
+if ["%HAVE_FREETYPE%"]  == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_FREETYPE" & set "CSF_DEFINES=HAVE_FREETYPE;%CSF_DEFINES%"
 if ["%HAVE_FREEIMAGE%"] == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_FREEIMAGE" & set "CSF_DEFINES=HAVE_FREEIMAGE;%CSF_DEFINES%"
 if ["%HAVE_FFMPEG%"]    == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_FFMPEG"    & set "CSF_DEFINES=HAVE_FFMPEG;%CSF_DEFINES%"
 if ["%HAVE_VTK%"]       == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_VTK"       & set "CSF_DEFINES=HAVE_VTK;%CSF_DEFINES%"
-if ["%HAVE_GLES2%"]     == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_GLES2"     & set "CSF_DEFINES=HAVE_GLES2;%CSF_DEFINES%"
+if ["%HAVE_GLES2%"]     == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_GLES2_EXT" & set "CSF_DEFINES=HAVE_GLES2_EXT;%CSF_DEFINES%"
 if ["%HAVE_D3D%"]       == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_D3D"       & set "CSF_DEFINES=HAVE_D3D;%CSF_DEFINES%"
 if ["%HAVE_ZLIB%"]      == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_ZLIB"      & set "CSF_DEFINES=HAVE_ZLIB;%CSF_DEFINES%"
 if ["%HAVE_LIBLZMA%"]   == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_LIBLZMA"   & set "CSF_DEFINES=HAVE_LIBLZMA;%CSF_DEFINES%"
 if ["%HAVE_RAPIDJSON%"] == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_RAPIDJSON" & set "CSF_DEFINES=HAVE_RAPIDJSON;%CSF_DEFINES%"
+if ["%HAVE_DRACO%"]     == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_DRACO"     & set "CSF_DEFINES=HAVE_DRACO;%CSF_DEFINES%"
 if ["%HAVE_OPENVR%"]    == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_OPENVR"    & set "CSF_DEFINES=HAVE_OPENVR;%CSF_DEFINES%"
 if ["%HAVE_E57%"]       == ["true"] set "PRODUCTS_DEFINES=%PRODUCTS_DEFINES% -DHAVE_E57"       & set "CSF_DEFINES=HAVE_E57;%CSF_DEFINES%"
 
@@ -199,20 +227,20 @@ if ["%CSF_DEFINES%"]  == [""] set "CSF_DEFINES=;"
 rem ----- Optional 3rd-parties should be enabled by HAVE macros -----
 if not ["%PRODUCTS_DEFINES%"] == [""] set "CSF_OPT_CMPL=%CSF_OPT_CMPL% %PRODUCTS_DEFINES%"
 
-rem ----- Colect 3rd-parties additional include paths into compiler options -----
+rem ----- Collect 3rd-parties additional include paths into compiler options -----
 for %%a in ("%CSF_OPT_INC:;=";"%") do (
   set "anItem=%%~a"
   if not ["%%~a"] == [""] call :concatCmplInc %%~a
 )
 
-rem ----- Colect 3rd-parties additional library paths (32-bit) into linker options -----
+rem ----- Collect 3rd-parties additional library paths (32-bit) into linker options -----
 set "OPT_LIB32="
 for %%a in ("%CSF_OPT_LIB32:;=";"%") do (
   set "anItem=%%~a"
   if not ["%%~a"] == [""] call :concatLib32 %%~a
 )
 
-rem ----- Colect 3rd-parties additional library paths (64-bit) into linker options -----
+rem ----- Collect 3rd-parties additional library paths (64-bit) into linker options -----
 set "OPT_LIB64="
 for %%a in ("%CSF_OPT_LIB64:;=";"%") do (
   set "anItem=%%~a"
@@ -229,7 +257,6 @@ set "CSF_OPT_LNK64I=%CSF_OPT_LNK64I% %OPT_LIB64%"
 rem ----- Default paths to sub-folders (can be different in install env) -----
 if "%CSF_OCCTIncludePath%" == "" set "CSF_OCCTIncludePath=%CASROOT%\inc"
 if "%CSF_OCCTResourcePath%" == "" set "CSF_OCCTResourcePath=%CASROOT%\src"
-if "%CSF_OCCTSamplesPath%" == "" set "CSF_OCCTSamplesPath=%CASROOT%\samples"
 if "%CSF_OCCTDataPath%" == "" set "CSF_OCCTDataPath=%CASROOT%\data"
 if "%CSF_OCCTTestsPath%" == "" set "CSF_OCCTTestsPath=%CASROOT%\tests"
 if "%CSF_OCCTBinPath%" == "" set "CSF_OCCTBinPath=%CASROOT%\win%ARCH%\%VCLIB%\bin%CASDEB%"
@@ -244,7 +271,7 @@ if ["%CASDEB%"] == ["d"] if ["%ARCH%"] == ["64"] set "PATH=%CSF_OPT_BIN64D%;%PAT
 if ["%CASDEB%"] == ["i"] if ["%ARCH%"] == ["32"] set "PATH=%CSF_OPT_BIN32I%;%PATH%"
 if ["%CASDEB%"] == ["i"] if ["%ARCH%"] == ["64"] set "PATH=%CSF_OPT_BIN64I%;%PATH%"
 
-rem ----- Set envoronment variables used by OCCT -----
+rem ----- Set environment variables used by OCCT -----
 set CSF_LANGUAGE=us
 set MMGT_CLEAR=1
 set "CSF_SHMessage=%CSF_OCCTResourcePath%\SHMessage"

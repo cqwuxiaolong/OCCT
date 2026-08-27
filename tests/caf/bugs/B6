@@ -7,6 +7,8 @@ puts "OCC1228"
 puts "================"
 puts ""
 
+pload VISUALIZATION
+
 # Presentation attributes
 #
 # Testing attribute: TPrsStd_AISPresentation
@@ -38,7 +40,7 @@ AISSet Doc ${aLabel} NS
 AISDisplay Doc ${aLabel}
 
 # Save the document
-set aFile ${imagedir}/OCC1228-[file tail [info script]].cbf
+set aFile ${imagedir}/OCC1228-${casename}.cbf
 file delete ${aFile}
 catch {SaveAs Doc ${aFile}}
 if { ![file exists ${aFile}] } {

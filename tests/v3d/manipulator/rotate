@@ -2,6 +2,8 @@ puts "=================================="
 puts "AIS_Manipulator - rotate an object"
 puts "=================================="
 
+pload MODELING VISUALIZATION
+
 set anImage1 $imagedir/${casename}_1.png
 set anImage2 $imagedir/${casename}_2.png
 set anImage3 $imagedir/${casename}_3.png
@@ -45,7 +47,7 @@ vmanipulator m -attach c1 -adjustPosition 1 -adjustSize 0 -enableModes 1 -size 4
 
 vmanipulator m -followRotation 1
 
-set mouse_pick {200 092}
+set mouse_pick {199 092}
 set mouse_drag {176 142}
 
 vmoveto {*}$mouse_pick
@@ -63,8 +65,8 @@ vdump $anImage1
 
 vmanipulator m -followRotation 1
 
-set mouse_pick {173 137}
-set mouse_drag {233 144}
+set mouse_pick {175 135}
+set mouse_drag {232 144}
 
 vmoveto {*}$mouse_pick
 vselect {*}$mouse_pick
@@ -111,7 +113,7 @@ vmanipulator m -followRotation 0
 # test rotation around y axis (world reference frame)
 # ---------------------------------------------------
 
-set mouse_pick {211 087}
+set mouse_pick {205 088}
 set mouse_drag {232 127}
 
 vmoveto {*}$mouse_pick
@@ -127,7 +129,7 @@ vdump $anImage4
 # test rotation around z axis (world reference frame)
 # ---------------------------------------------------
 
-set mouse_pick {228 141}
+set mouse_pick {228 142}
 set mouse_drag {184 143}
 
 vmoveto {*}$mouse_pick
@@ -138,5 +140,3 @@ vmanipulator m -stopTransform
 vselect 0 0
 vmoveto {*}$mouse_drag
 vdump $anImage5
-
-set to_dump_screen 0

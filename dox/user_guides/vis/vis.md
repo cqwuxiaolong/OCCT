@@ -75,7 +75,7 @@ Additionally, *IVtkTools* package contains auxiliary methods in *IVtkTools* name
 To visualize an OCCT topological shape in VTK viewer, it is necessary to perform the following steps:
 
 1. Create *IVtkOCC_Shape* instance (VIS wrapper for OCCT shape) and initialize it with *TopoDS_Shape* object containing the actual geometry:
-~~~~
+~~~~{.cpp}
 TopoDS_Shape aShape;
 
 // Initialize aShape variable: e.g. load it from BREP file
@@ -83,30 +83,30 @@ TopoDS_Shape aShape;
 IVtkOCC_Shape::Handle aShapeImpl = new IVtkOCC_Shape(aShape);
 ~~~~
 2. Create VTK polygonal data source for the target OCCT topological shape and initialize it with created *IVtkOCC_Shape* instance. At this stage the faceter is implicitly plugged:
-~~~~
+~~~~{.cpp}
 vtkSmartPointer<IVtkTools_ShapeDataSource> DS = vtkSmartPointer<IVtkTools_ShapeDataSource>::New();
 
 DS->SetShape(aShapeImpl);
 ~~~~
 3. Visualize the loaded shape in usual VTK way starting a pipeline from the newly created specific source:
-~~~~
+~~~~{.cpp}
 vtkSmartPointer<vtkPolyDataMapper> Mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
-Mapper->SetInputConnection(aDS->GetOutputPort());
+Mapper->SetInputConnection(DS->GetOutputPort());
 vtkSmartPointer<vtkActor> Actor = vtkSmartPointer<vtkActor>::New();
 
 Actor->SetMapper(Mapper);
 ~~~~
 
 It is always possible to access the shape data source from VTK actor by means of dedicated methods from *IVtkTools_ShapeObject* class:
-~~~~
+~~~~{.cpp}
 IVtkTools_ShapeDataSource* DS = IVtkTools_ShapeObject::GetShapeSource(Actor);
 
 IVtkOCC_Shape::Handle occShape = IVtkTools_ShapeObject::GetOccShape(Actor);
 ~~~~
 
 It is also possible to get a shape wrapper from the shape data source:
-~~~~
+~~~~{.cpp}
 IVtkOCC_Shape::Handle occShape = DS->GetShape();
 ~~~~
 
@@ -115,30 +115,30 @@ IVtkOCC_Shape::Handle occShape = DS->GetShape();
 
 To colorize different parts of a shape according to the default OCCT color scheme, it is possible to configure the corresponding VTK mapper using a dedicated auxiliary function of *IVtkTools* namespace:
 
-~~~~
+~~~~{.cpp}
 IVtkTools::InitShapeMapper(Mapper);
 ~~~~
 It is possible to get an instance of *vtkLookupTable class* with a default OCCT color scheme by means of the following method:
 
-~~~~
+~~~~{.cpp}
 vtkSmartPointer<vtkLookupTable> Table = IVtkTools::InitLookupTable();
 ~~~~
 
 @subsubsection occt_vis_3_2_2	Custom color scheme
 To set up application-specific colors for a shape presentation, use *InitShapeMapper* function with an additional argument passing a custom lookup table:
 
-~~~~
+~~~~{.cpp}
 IVtkTools::InitShapeMapper(Mapper, Table);
 ~~~~
 
 @subsubsection occt_vis_3_2_3	Setting custom colors for sub-shapes
 
 It is also possible to bind custom colors to any sub-shape type listed in *IVtk_MeshType* enumeration. For example, to access the color bound to *free edge* entities, the following calls are available in *IVtkTools* namespace:
-~~~~
-SetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B);
-SetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B, A);
-GetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B);
-GetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B, A);
+~~~~{.cpp}
+IVtkTools::SetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B);
+IVtkTools::SetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B, A);
+IVtkTools::GetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B);
+IVtkTools::GetLookupTableColor(aLookupTable, MT_FreeEdge, R, G, B, A);
 ~~~~
 Here *R, G, B* are double values of red, green and blue components of a color from the range [0, 1]. The optional parameter *A* stands for the alpha value (the opacity) as a double from the same range [0, 1]. By default alpha value is 1, i.e. a color is not transparent.
 
@@ -146,7 +146,7 @@ Here *R, G, B* are double values of red, green and blue components of a color fr
 
 As VTK color mapping approach is based on associating scalar data arrays to VTK cells, the coloring of shape components can be turned on/off in the following way:
 
-~~~~
+~~~~{.cpp}
 Mapper->ScalarVisibilityOn();  // use colors from lookup table
 Mapper->ScalarVisibilityOff(); // use a color of actor’s property
 ~~~~
@@ -160,7 +160,7 @@ The output of the shape data source can be presented in wireframe or shading dis
 
 For example, the shading representation can be obtained in the following way:
 
-~~~~
+~~~~{.cpp}
 vtkSmartPointer<IVtkTools_ShapeDataSource> DS = vtkSmartPointer<IVtkTools_ShapeDataSource>::New();
 
 vtkSmartPointer<IVtkTools_DisplayModeFilter> DMFilter = vtkSmartPointer<IVtkTools_DisplayModeFilter>::New();
@@ -181,57 +181,57 @@ TIP: to make the shading representation smooth, use additional *vtkPolyDataNorma
 @subsection occt_vis_3_4	 Interactive selection
 *IVtkTools* package provides *IVtkTools_ShapePicker* class to perform selection of OCCT shapes and sub-shapes in VTK viewer and access the picking results. The typical usage of *IVtkTools_ShapePicker* tool consists in the following sequence of actions:
 1. Create a picker and set its renderer to your active VTK renderer:
-~~~~
+~~~~{.cpp}
 vtkSmartPointer<IVtkTools_ShapePicker> aPicker = vtkSmartPointer<IVtkTools_ShapePicker>::New();
 
 aPicker->SetRenderer(aRenderer);
 ~~~~
 2. Activate the desired selection mode by choosing the corresponding sub-shape types from *IVtk_SelectionMode* enumeration. For example, the following call allows selection of edges on all selectable shape actors of the renderer:
-~~~~
+~~~~{.cpp}
 aPicker->SetSelectionMode(SM_Edge);
 ~~~~
 If it is necessary to limit selection by a particular shape actor, one can use the mentioned *SetSelectionMode* method with *IVtk_IShape* handle or *vtkActor* pointer as the first argument:
-~~~~
+~~~~{.cpp}
 IVtk_IShape::Handle aShape = new IVtkOCC_Shape(occShape);
 aPicker->SetSelectionMode(aShape, SM_Edge); // If shape handle is available
 aPicker->SetSelectionMode(anActor, SM_Edge); // If shape actor is available
 ~~~~
 Different selection modes can be turned on/off for a picker at the same time independently from each other.
-~~~~
+~~~~{.cpp}
 aPicker->SetSelectionMode(SM_Edge);
 aPicker->SetSelectionMode(SM_Face);
 ~~~~
 To turn off a selection mode, the additional optional Boolean parameter is used with *false* value, for example:
-~~~~
+~~~~{.cpp}
 aPicker->SetSelectionMode(aShape, SM_Edge, false);
 ~~~~
 3. Call *Pick* method passing the mouse display coordinates:
-~~~~
+~~~~{.cpp}
 aPicker->Pick(x, y, 0);
 ~~~~
 By default, the renderer passed in the step 1 is used. In order to perform pick operation for another renderer an additional optional parameter can be specified:
-~~~~
+~~~~{.cpp}
 aPicker->Pick(x, y, 0, aRenderer);
 ~~~~
 4. Obtain the top-level picking results as a collection of picked VTK actors:
-~~~~
+~~~~{.cpp}
 vtkActorCollection* anActorCollection = aPicker->GetPickedActors();
 ~~~~
 or as a collection of picked shape IDs:
-~~~~
-IVtk_ShapeIdList ids = aPicker->GetPickedShapesIds();
+~~~~{.cpp}
+NCollection_List<IVtk_IdType> ids = aPicker->GetPickedShapesIds();
 ~~~~
 These methods return a single top picked actor or a shape by default. To get all the picked actors or shapes it is necessary to send “true” value in the optional Boolean parameter:
-~~~~
+~~~~{.cpp}
 anActorCollection = aPicker->GetPickedActors(true);
 ids = aPicker->GetPickedShapesIds(true);
 ~~~~
 5. Obtain the picked sub-shape IDs:
-~~~~
-IVtk_ShapeIdList subShapeIds = aPicker->GetPickedSubShapesIds(shapeId);
+~~~~{.cpp}
+NCollection_List<IVtk_IdType> subShapeIds = aPicker->GetPickedSubShapesIds(shapeId);
 ~~~~
 This method also returns a single ID of a top-level picked sub-shape and has the same optional Boolean parameter to get all the picked sub-shapes of a shape:
-~~~~
+~~~~{.cpp}
 subShapeIds = aPicker->GetPickedSubShapesIds(shapeId, true);
 ~~~~
 
@@ -249,7 +249,7 @@ WARNING: VIS picker essentially works on the initial topological data structures
 
 For example, sub-shapes can be represented in VTK viewer in the following way:
 
-~~~~
+~~~~{.cpp}
 // Load a shape into data source (see 3.1)
 ...
 vtkSmartPointer<IVtkTools_ShapeDataSource> DS = vtkSmartPointer<IVtkTools_ShapeDataSource>::New();
@@ -264,7 +264,7 @@ vtkSmartPointer<IVtkTools_SubPolyDataFilter> subShapesFilter = IVtkTools_SubPoly
 subShapesFilter->SetInputConnection(DS->GetOutputPort());
 
 // Get all picked sub-shapes ids of the shape from a picker (see 3.4)
-IVtk_ShapeIdList subShapeIds = aPicker->GetPickedSubShapesIds(ds->GetId(), true);
+NCollection_List<IVtk_IdType> subShapeIds = aPicker->GetPickedSubShapesIds(DS->GetId(), true);
 
 // Set ids to the filter to pass only picked sub-shapes
 subShapesFilter->SetData(subShapeIds);
@@ -282,11 +282,11 @@ The usage of low-level tools is justified in cases when the utilities from *IVtk
 
 The low-level scenario of VIS usage in VTK pipeline is shown in the figure below. The Mesher component produces shape facet (VTK polygonal data) using implementation of *IShapeData* interface. Then result can be retrieved from this implementation as a *vtkPolyData* instance.
 
-@figure{/user_guides/vis/images/vis_image007.svg "Low-level VIS usage with VTK", 420}
+@figure{/user_guides/vis/images/vis_image007.svg,"Low-level VIS usage with VTK", 420}
 
 The visualization pipeline for OCCT shape presentation can be initialized as follows:
 1. Create an instance of *IShape* class initialized by OCCT topological shape:
-~~~~
+~~~~{.cpp}
 TopoDS_Shape aShape;
 
 // Load or create a TopoDS_Shape in the variable a Shape
@@ -294,15 +294,15 @@ TopoDS_Shape aShape;
 IVtkOCC_Shape::Handle aShapeImpl = new IVtkOCC_Shape(aShape);
 ~~~~
 2. Create an empty instance of IShapeData implementation for VTK:
-~~~~
+~~~~{.cpp}
 IVtk_IShapeData::Handle aDataImpl = new IVtkVTK_ShapeData();
 ~~~~
 3 Create an instance of *IShapeMesher* implementation for OCCT (any faceter can be used at this stage):
-~~~~
+~~~~{.cpp}
 IVtk_IShapeMesher::Handle aMesher = new IVtkOCC_ShapeMesher();
 ~~~~
 4 Triangulate the OCCT topological shape by means of the Mesher and access the result:
-~~~~
+~~~~{.cpp}
 aMesher->Build (aShapeImpl, aDataImpl);
 
 vtkPolyData* aPolyData = aDataImpl->GetVtkPolyData();
@@ -323,41 +323,41 @@ Picking algorithm  uses an instance of viewer selector (OCCT term), which manage
 
 The typical usage of *IVtk_IShapePickerAlgo* consists in the following sequence of actions:
 1. Create an instance of the picker class:
-~~~~
-IVtkOCC_ShapePickerAlgo::Handle Picker = new IVtkOCC_ShapePickerAlgo();
+~~~~{.cpp}
+IVtkOCC_ShapePickerAlgo::Handle myOccPickerAlgo = new IVtkOCC_ShapePickerAlgo();
 ~~~~
 
 2. Set an instance of *IVtk_IView* class to the algorithm in order to define the viewer parameters:
-~~~~
-IVtkVTK_View::Handle View = new IVtkVTK_View(Renderer);
-Picker->SetView(View);
+~~~~{.cpp}
+IVtkVTK_View::Handle aView = new IVtkVTK_View(Renderer);
+myOccPickerAlgo->SetView(aView);
 ~~~~
 3. Activate the desired selection modes using values from *IVtk_SelectionMode* enumeration. For example, the following call allows selection of edges:
-~~~~
+~~~~{.cpp}
 TopoDS_Shape aShape;
 // Load or create a TopoDS_Shape in the variable a Shape
 ...
 IVtk_IShape::Handle shapeImpl = new IVtkOCC_Shape(aShape);
 ...
-myOccPickerAlgo->SetSelectionMode(occShape, SM_Edge);
+myOccPickerAlgo->SetSelectionMode(shapeImpl, SM_Edge);
 ~~~~
 Different selection modes can be turned on/off for a picker at the same time independently from each other.
 To turn off a selection mode the additional optional Boolean parameter is used with *false* value, for example:
-~~~~
-myOccPickerAlgo->SetSelectionMode(occShape, SM_Edge, false);
+~~~~{.cpp}
+myOccPickerAlgo->SetSelectionMode(shapeImpl, SM_Edge, false);
 ~~~~
 4. Call *Pick* method passing the mouse coordinates:
-~~~~
+~~~~{.cpp}
 myOccPickerAlgo->Pick(x, y);
 ~~~~
 5. Obtain top-level picking results as IDs of the picked top-level shapes:
-~~~~
-IVtk_ShapeIdList ids = myOccPickerAlgo->ShapesPicked();
+~~~~{.cpp}
+NCollection_List<IVtk_IdType> ids = myOccPickerAlgo->ShapesPicked();
 ~~~~
 6. Obtain IDs of the picked sub-shapes:
-~~~~
-IVtk_ShapeIdList subShapeIds
-  = myOccPickerAlgo->SubShapesPicked(shapeId);
+~~~~{.cpp}
+NCollection_List<IVtk_IdType> subShapeIds;
+myOccPickerAlgo->SubShapesPicked(shapeId, subShapeIds);
 ~~~~
 
 @section occt_vis_5	DRAW Test Harness
@@ -365,4 +365,3 @@ IVtk_ShapeIdList subShapeIds
 *TKIVtkDraw* toolkit contains classes for embedding VIS functionality into DRAW Test Harness with possibility of simple interactions, including detection and highlighting.
 * *IVtkDraw_HighlightAndSelectionPipeline* -- Creates VTK pipeline with OCCT shape data source and properly initialized VIS filters.
 * *IVtkDraw_Interactor* -- Controls simple interactive actions, such as detection and selection of the displayed shapes.
-

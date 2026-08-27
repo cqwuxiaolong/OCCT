@@ -1,11 +1,9 @@
-puts "TODO CR29596 All: Intersection of pair of shapes has failed"
-
 puts "========"
 puts "OCC29900: Invalid result of FUSE operation"
 puts "========"
 puts ""
 
-cpulimit 3000
+cpulimit 1000
 
 brestore [locate_data_file bug29900_rotated.brep] s1
 brestore [locate_data_file bug29900_sewedShape.brep] s2
